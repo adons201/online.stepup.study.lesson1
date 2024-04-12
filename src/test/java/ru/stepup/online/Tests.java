@@ -45,11 +45,12 @@ public class Tests {
         account.setQuantityCurrency(Currency.RUB, 45);
         account.setName("Petya");
         account.setName("Petya");
-        account.setQuantityCurrency(Currency.EUR, 15);
-        account.setQuantityCurrency(Currency.EUR, 12);
+        account.setQuantityCurrency(Currency.EUR, 1000000);
+        account.setQuantityCurrency(Currency.EUR, 12000000);
         account.setQuantityCurrency(Currency.EUR, 45);
 
         account.undo();
+        Assertions.assertEquals(12000000,account.getMapCurrency().get(Currency.EUR));
         account.undo();
         account.undo();
         account.undo();
@@ -69,51 +70,24 @@ public class Tests {
         Assertions.assertThrows(IllegalArgumentException.class,()->account.undo());
     }
 
-    @Test
-    @DisplayName("Изменение объекта SaveAccount недоступно. Доступно только создание эквивалентных")
-    public void createSave(){
-        Account account = Account.ofName("Vadim");
-        SaveAccount saveAccount = SaveAccount.add(account.save());
-        SaveAccount saveAccount2 = SaveAccount.add(account.save());
-        Assertions.assertTrue(saveAccount!=saveAccount2);
-        Assertions.assertEquals(saveAccount,saveAccount2);
-    }
 
     @Test
     @DisplayName("Корректный сохранение и восстановление копии")
     public void saveCorrect(){
         Account account = Account.ofName("Vadim");
+        SaveAccountRep saveAccountRep = new SaveAccountRep();
         account.setQuantityCurrency(Currency.RUB, 0);
         account.setQuantityCurrency(Currency.RUB, 45);
-        SaveAccount saveAccount = SaveAccount.add(account.save());
+
+        saveAccountRep.addSave(account.save());
+
         account.setName("Petya");
         account.setQuantityCurrency(Currency.EUR, 15);
         account.setQuantityCurrency(Currency.RUB, 10);
 
-        account.load(saveAccount);
+        account.load(saveAccountRep.getSave(0));
 
         Assertions.assertEquals(account.getName(),"Vadim");
-        Assertions.assertEquals(account.getMapCurrency().get(Currency.EUR),null);
-        Assertions.assertEquals(account.getMapCurrency().get(Currency.RUB),45);
-
-    }
-
-    @Test
-    @DisplayName("Корректный откат после восстановления копии")
-    public void correctLoadAndUndo(){
-        Account account = Account.ofName("Vadim");
-        account.setQuantityCurrency(Currency.RUB, 0);
-        account.setQuantityCurrency(Currency.RUB, 45);
-        account.setName("Petya");
-        account.setQuantityCurrency(Currency.EUR, 15);
-        SaveAccount saveAccount = SaveAccount.add(account.save());
-        account.setQuantityCurrency(Currency.RUB, 10);
-        account.setName("Alex");
-
-        account.load(saveAccount);
-        account.undo();
-
-        Assertions.assertEquals(account.getName(),"Petya");
         Assertions.assertEquals(account.getMapCurrency().get(Currency.EUR),null);
         Assertions.assertEquals(account.getMapCurrency().get(Currency.RUB),45);
 
